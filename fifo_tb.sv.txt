@@ -1,0 +1,99 @@
+// Synchronous FIFO Directed Testbench
+
+module fifo_tb;
+
+    logic        clk, rst;
+    logic        wr_en, rd_en;
+    logic [7:0]  din;
+    logic [7:0]  dout;
+    logic        full, empty;
+
+    // Instantiate DUT
+    fifo_sync #(.DEPTH(8), .WIDTH(8)) dut (
+        .clk   (clk),
+        .rst   (rst),
+        .wr_en (wr_en),
+        .rd_en (rd_en),
+        .din   (din),
+        .dout  (dout),
+        .full  (full),
+        .empty (empty)
+    );
+
+    // Clock Generation
+    initial clk = 0;
+    always #5 clk = ~clk;
+
+    // Task: Write to FIFO
+    task write_fifo(input [7:0] data);
+        @(posedge clk);
+        wr_en = 1;
+        rd_en = 0;
+        din   = data;
+        @(posedge clk);
+        wr_en = 0;
+    endtask
+
+    // Task: Read from FIFO
+    task read_fifo();
+        @(posedge clk);
+        rd_en = 1;
+        wr_en = 0;
+        @(posedge clk);
+        rd_en = 0;
+    endtask
+
+    // Main Test
+    initial begin
+        // Initialize
+        rst   = 1;
+        wr_en = 0;
+        rd_en = 0;
+        din   = 0;
+        repeat(2) @(posedge clk);
+        rst = 0;
+        $display("=== FIFO Directed Testbench ===");
+
+        // Test 1: Write 8 values (fill FIFO)
+        $display("\n-- Test 1: Writing 8 values --");
+        repeat(8) begin
+            write_fifo($urandom_range(0,255));
+            $display("Wrote: %0d | Full=%b Empty=%b", din, full, empty);
+        end
+
+        // Test 2: Check Full flag
+        $display("\n-- Test 2: Full Flag Check --");
+        $display("FIFO Full = %b (Expected: 1)", full);
+
+        // Test 3: Write when Full (should be ignored)
+        $display("\n-- Test 3: Write when Full --");
+        write_fifo(8'hFF);
+        $display("Write attempt when full | Full=%b", full);
+
+        // Test 4: Read all values
+        $display("\n-- Test 4: Reading all values --");
+        repeat(8) begin
+            read_fifo();
+            $display("Read: %0d | Full=%b Empty=%b", dout, full, empty);
+        end
+
+        // Test 5: Check Empty flag
+        $display("\n-- Test 5: Empty Flag Check --");
+        $display("FIFO Empty = %b (Expected: 1)", empty);
+
+        // Test 6: Read when Empty (should be ignored)
+        $display("\n-- Test 6: Read when Empty --");
+        read_fifo();
+        $display("Read attempt when empty | Empty=%b", empty);
+
+        $display("\n=== All Tests Completed ===");
+        $finish;
+    end
+
+    // Monitor
+    initial begin
+        $dumpfile("fifo_dump.vcd");
+        $dumpvars(0, fifo_tb);
+    end
+
+endmodule
