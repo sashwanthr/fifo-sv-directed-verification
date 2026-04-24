@@ -4,6 +4,7 @@
 Designed and verified a synchronous FIFO (First In First Out) memory using 
 Verilog RTL and a SystemVerilog directed testbench. Simulation performed 
 using Aldec Riviera-PRO on EDA Playground.
+**Live Simulation:** [Run on EDA Playground](https://www.edaplayground.com/x/ThcQ)
 
 ## Specifications
 - FIFO Depth: 8
